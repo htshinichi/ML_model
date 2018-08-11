@@ -7,11 +7,11 @@ Created on Sat Aug 11 12:43:13 2018
 import pandas as pd
 import DecisionTREE
 import DrawDecisionTREE
-sika = pd.read_csv("sika.csv")
-sika_feature=sika.columns.values.tolist()[:8]
+suika = pd.read_csv("suika3.0.csv")
+suika_feature=suika.columns.values.tolist()[:8]
 fealabel = ['色泽', '根蒂', '敲击', '纹理', '脐部', '触感', '密度', '含糖率']
 DT_model = DecisionTREE.DecisionTree()
 DDT = DrawDecisionTREE.DrawDecisionTree()
-sika_model = DT_model.create_tree_C45(sika,sika_feature)
-print(sika_model)
-DDT.createPlot(sika_model)
+suika_model = DT_model.create_tree_C45(suika,suika_feature)
+print(suika_model)
+DDT.createPlot(suika_model)
