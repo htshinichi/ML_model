@@ -5,7 +5,6 @@ Created on Sat Aug 11 20:31:14 2018
 @author: htshinichi
 """
 import KnnClassifier
-##用于可视化图表
 import matplotlib.pyplot as plt
 class KnnFunction():
     #根据k取值列表，计算各取值的精确率
