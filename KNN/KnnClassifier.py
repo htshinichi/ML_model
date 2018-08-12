@@ -13,7 +13,7 @@ class KNN():
     def __init__(self,k=5):
         self.k = k
     #------------------计算欧氏距离-----------------#
-    def euclidean_distance(self,one_sample,X_train):#计算一个测试样本与所有训练样本的欧氏距离的平方
+    def euclidean_distance(self,one_sample,X_train):#计算一个测试样本与所有训练样本的欧氏距离
         #将测试样本变成只有1行
         one_sample = one_sample.reshape(1,-1)
         X_train = X_train.reshape(X_train.shape[0],-1)
