@@ -6,10 +6,11 @@ Created on Tue Aug 12 12:44:00 2018
 """
 import numpy as np
 import pandas as pd
-import numpy as np
-import pandas as pd
-from sklearn.model_selection import train_test_split
 class NaiveBayesDiscrete():
+    #初始化
+    def __init__(self,lamda=1):
+        self.lamda = lamda
+        
     #获取相关参数
     def getParams(self,data):
         self.ck_counts = data.label.value_counts()#训练样本中类为ck的数量集合
@@ -17,12 +18,14 @@ class NaiveBayesDiscrete():
         self.DataNum = len(data)#训练样本总数N
         self.CNum = len(self.ck_counts)#类的个数K
         self.DataSet = data
+        
     #计算先验概率
     def calPriorProb(self):
         self.ck_PriorProb = []
         for i in range(self.CNum):
-            cx_PriorProb = (self.ck_counts[i]+1)/(self.DataNum+self.CNum*1)
+            cx_PriorProb = (self.ck_counts[i]+self.lamda)/(self.DataNum+self.CNum*self.lamda)
             self.ck_PriorProb.append(cx_PriorProb)
+            
     #计算条件概率
     def calCondProb(self):
         names = locals()#使用动态变量
@@ -50,10 +53,10 @@ class NaiveBayesDiscrete():
                     #这里用了拉普拉斯平滑，使得条件概率不会出现0的情况
                     #如果某个类的某个特征取值在训练集上都出现过，则这样计算
                     if value in names['Q%s' % i][feature].value_counts():
-                        temp = (names['Q%s' % i][feature].value_counts()[value]+1)/(names['Q%s' % i][feature].value_counts().sum()+len(names['Q%s' % i][feature].value_counts())*1)
+                        temp = (names['Q%s' % i][feature].value_counts()[value]+self.lamda)/(names['Q%s' % i][feature].value_counts().sum()+len(names['Q%s' % i][feature].value_counts())*self.lamda)
                     #如果某个类的某个特征取值并未在训练集上出现，为了避免出现0的情况，分子取1(即lamda平滑因子，取1时为拉普拉斯平滑)
                     else:
-                        temp = 1/(names['Q%s' % i][feature].value_counts().sum()+len(names['Q%s' % i][feature].value_counts())*1)
+                        temp = self.lamda/(names['Q%s' % i][feature].value_counts().sum()+len(names['Q%s' % i][feature].value_counts())*self.lamda)
                     
                     #将求得的特征取值条件概率加入列表
                     names['Q%s' % feature].append(temp)
@@ -70,16 +73,17 @@ class NaiveBayesDiscrete():
         self.CondProb = pd.DataFrame(self.CondProb,columns=self.CondProb[self.CNum],index = index)
         self.CondProb.drop(['other'],inplace = True)
         
+        
     #对一个样本进行预测    
     def predict(self,traindata,testdata):
         self.getParams(traindata)#获取参数
         self.calPriorProb()#获取先验概率
         self.calCondProb()#获取条件概率
-        
+    
         self.ClassTotalProb = []#初始化各类别总概率列表
         bestprob = -1#初始化最高概率
         bestfeat = ''#初始化最可能类别
-        
+    
         for feat in self.ck_name:
             pp = self.ck_PriorProb[self.ck_name.tolist().index(feat)]#pp为先验概率
             cp = 1#初始化条件概率
