@@ -109,7 +109,7 @@ class NaiveBayesDiscrete():
             print(predProb,predFeat,realFeat[i])
             if(realFeat[i] == predFeat):
                 num = num + 1
-        acc = num / len(realFeat)
+        acc = num / float(len(realFeat))*100
         return acc
         
             
