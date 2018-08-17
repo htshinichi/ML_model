@@ -53,4 +53,4 @@ class LogisticRegression():
             temp = np.array(TestData.iloc[i][0:len(TestData.columns)-1]).reshape(len(TestData.columns)-1,1)
             if self.predict(temp)==TestData.label.tolist()[i]:
                 num = num + 1
-        return num/len(TestData)
+        return num/float(len(TestData))*100.0
