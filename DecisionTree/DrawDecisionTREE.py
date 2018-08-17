@@ -2,7 +2,7 @@
 """
 Created on Sat Aug 11 12:41:11 2018
 
-@author: htshi
+@author: htshinichi
 """
 import matplotlib.pyplot as plt
 from pylab import *  
