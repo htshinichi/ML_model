@@ -33,7 +33,7 @@ class LogisticRegression():
                 
                 #可以选择训练过程中绘制决策边界
                 if self.plot == True:
-                    if n % (self.n_iter/10) == 0:
+                    if n % (self.n_iter/5) == 0:
                         self.plotDecisionBoundary(TrainData)
             if self.plot == True:
                 self.plotDecisionBoundary(TrainData)
@@ -51,7 +51,7 @@ class LogisticRegression():
                 
                 #可以选择训练过程中绘制决策边界
                 if self.plot == True:
-                    if n % (self.n_iter/10) == 0:
+                    if n % (self.n_iter/5) == 0:
                         self.plotDecisionBoundary(TrainData)
             if self.plot == True:
                 self.plotDecisionBoundary(TrainData)
@@ -82,7 +82,7 @@ class LogisticRegression():
         plt.ylabel('x2')
         plt.title('decision boundary') 
         x1 = np.arange(-4,4,1)
-        x2 =-1 * model_lr.weights[0][0] / model_lr.weights[0][1] * x1
+        x2 =-1 * self.weights[0][0] * x1 / self.weights[0][1]
         plt.scatter(TrainData[TrainData.columns[0]], TrainData[TrainData.columns[1]], c=TrainData['label'], s=30)
         plt.plot(x1,x2)
         plt.show()
