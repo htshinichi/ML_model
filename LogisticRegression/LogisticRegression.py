@@ -33,30 +33,10 @@ class LogisticRegression():
                 
                 #可以选择训练过程中绘制决策边界
                 if self.plot == True:
-                    if n % 50 == 0:
-                        fig=plt.figure(figsize=(10,8))
-                        plt.xlim(-4,4)  #  设置x轴刻度范围
-                        plt.ylim(-4,4)  #  设置y轴刻度范围
-                        plt.xlabel('x1')   
-                        plt.ylabel('x2')
-                        plt.title('decision boundary') 
-                        x1 = np.arange(-4,4,1)
-                        x2 =-1 * model_lr.weights[0][0] / model_lr.weights[0][1] * x1
-                        plt.scatter(TrainData[TrainData.columns[0]], TrainData[TrainData.columns[1]], c=TrainData['label'], s=30)
-                        plt.plot(x1,x2)
-                        plt.show()
+                    if n % (self.n_iter/10) == 0:
+                        self.plotDecisionBoundary(TrainData)
             if self.plot == True:
-                fig=plt.figure(figsize=(10,8))
-                plt.xlim(-4,4)  #  设置x轴刻度范围
-                plt.ylim(-4,4)  #  设置y轴刻度范围
-                plt.xlabel('x1')   
-                plt.ylabel('x2')
-                plt.title('decision boundary') 
-                x1 = np.arange(-4,4,1)
-                x2 =-1 * model_lr.weights[0][0] / model_lr.weights[0][1] * x1
-                plt.scatter(TrainData[TrainData.columns[0]], TrainData[TrainData.columns[1]], c=TrainData['label'], s=30)
-                plt.plot(x1,x2)
-                plt.show()
+                self.plotDecisionBoundary(TrainData)
                 
             return self.weights
         
@@ -71,30 +51,10 @@ class LogisticRegression():
                 
                 #可以选择训练过程中绘制决策边界
                 if self.plot == True:
-                    if n % 50 == 0:
-                        fig=plt.figure(figsize=(10,8))
-                        plt.xlim(-4,4)  #  设置x轴刻度范围
-                        plt.ylim(-4,4)  #  设置y轴刻度范围
-                        plt.xlabel('x1')   
-                        plt.ylabel('x2')
-                        plt.title('decision boundary') 
-                        x1 = np.arange(-4,4,1)
-                        x2 =-1 * model_lr.weights[0][0] / model_lr.weights[0][1] * x1
-                        plt.scatter(TrainData[TrainData.columns[0]], TrainData[TrainData.columns[1]], c=TrainData['label'], s=30)
-                        plt.plot(x1,x2)
-                        plt.show()
+                    if n % (self.n_iter/10) == 0:
+                        self.plotDecisionBoundary(TrainData)
             if self.plot == True:
-                fig=plt.figure(figsize=(10,8))
-                plt.xlim(-4,4)  #  设置x轴刻度范围
-                plt.ylim(-4,4)  #  设置y轴刻度范围
-                plt.xlabel('x1')   
-                plt.ylabel('x2')
-                plt.title('decision boundary') 
-                x1 = np.arange(-4,4,1)
-                x2 =-1 * model_lr.weights[0][0] / model_lr.weights[0][1] * x1
-                plt.scatter(TrainData[TrainData.columns[0]], TrainData[TrainData.columns[1]], c=TrainData['label'], s=30)
-                plt.plot(x1,x2)
-                plt.show()
+                self.plotDecisionBoundary(TrainData)
                 
             return self.weights
                 
@@ -113,3 +73,16 @@ class LogisticRegression():
             if self.predict(temp)==TestData.label.tolist()[i]:
                 num = num + 1
         return num/len(TestData)
+    
+    def plotDecisionBoundary(self,TrainData):
+        fig=plt.figure(figsize=(10,8))
+        plt.xlim(-4,4)  #  设置x轴刻度范围
+        plt.ylim(-4,4)  #  设置y轴刻度范围
+        plt.xlabel('x1')   
+        plt.ylabel('x2')
+        plt.title('decision boundary') 
+        x1 = np.arange(-4,4,1)
+        x2 =-1 * model_lr.weights[0][0] / model_lr.weights[0][1] * x1
+        plt.scatter(TrainData[TrainData.columns[0]], TrainData[TrainData.columns[1]], c=TrainData['label'], s=30)
+        plt.plot(x1,x2)
+        plt.show()
