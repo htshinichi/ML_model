@@ -33,8 +33,8 @@ class LogisticRegression():
                 gradient = np.dot(loss,data) / datanum
                 self.weights = self.weights - self.eta * gradient#即weights = weights - eta*(h(x)-y)*x/datanum
                 if n % 100 ==0:
-                    cost = self.costFunction(np.array(TrainData[TrainData.columns.tolist()[0:featnum]]),y_label)
-                    print(cost)
+                    self.cost = self.costFunction(np.array(TrainData[TrainData.columns.tolist()[0:featnum]]),y_label)
+                    print("迭代",n,"次","损失值为：",self.cost)
                 #可以选择训练过程中绘制决策边界
                 if self.plot == True:
                     if n % (self.n_iter/5) == 0:
@@ -58,8 +58,8 @@ class LogisticRegression():
                 gradientx = lossx * datax
                 self.weights = self.weights - self.eta * gradientx#即weights = weights - eta*(h(x)-y)*x/datanum
                 if n % 100 ==0:
-                    cost = self.costFunction(np.array(TrainData[TrainData.columns.tolist()[0:featnum]]),y_label)
-                    print(cost)
+                    self.cost = self.costFunction(np.array(TrainData[TrainData.columns.tolist()[0:featnum]]),y_label)
+                    print("迭代",n,"次","损失值为：",self.cost)
                 #loss = 
                 #可以选择训练过程中绘制决策边界
                 if self.plot == True:
@@ -95,7 +95,7 @@ class LogisticRegression():
         return num/float(len(TestData))*100
     
     def plotDecisionBoundary(self,TrainData):
-        fig=plt.figure(figsize=(10,8))
+        plt.figure(figsize=(10,8))
         plt.xlim(-4,4)  #  设置x轴刻度范围
         plt.ylim(-4,4)  #  设置y轴刻度范围
         plt.xlabel('x1')   
