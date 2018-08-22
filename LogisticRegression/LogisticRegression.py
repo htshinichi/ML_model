@@ -57,7 +57,7 @@ class LogisticRegression():
                 lossx = hxx-y_label[x]
                 gradientx = lossx * datax
                 self.weights = self.weights - self.eta * gradientx#即weights = weights - eta*(h(x)-y)*x/datanum
-                if n % 10 ==0:
+                if n % 100 ==0:
                     cost = self.costFunction(np.array(TrainData[TrainData.columns.tolist()[0:featnum]]),y_label)
                     print(cost)
                 #loss = 
