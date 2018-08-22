@@ -5,7 +5,7 @@ Created on Thu Aug 16 19:07:45 2018
 @author: htshinichi
 """
 import random
-import numpy as np
+import numpy as np  
 import matplotlib.pyplot as plt
 class LogisticRegression():
     def __init__(self,n_iter = 100,eta = 0.0001,gd = 'bgd',plot = False):
@@ -29,8 +29,12 @@ class LogisticRegression():
             data_T = data.transpose()#数据大小为featnum×datanum
             for n in range(self.n_iter):
                 hx = self.sigmoid(np.dot(self.weights,data_T))#预测值，即h(x)=1/(1+e^(-wx))
-                self.weights = self.weights - self.eta * np.dot((hx - y_label),data)/datanum#即weights = weights - eta*(h(x)-y)*x/datanum
-                
+                loss = hx - y_label
+                gradient = np.dot(loss,data) / datanum
+                self.weights = self.weights - self.eta * gradient#即weights = weights - eta*(h(x)-y)*x/datanum
+                if n % 100 ==0:
+                    cost = self.costFunction(np.array(TrainData[TrainData.columns.tolist()[0:featnum]]),y_label)
+                    print(cost)
                 #可以选择训练过程中绘制决策边界
                 if self.plot == True:
                     if n % (self.n_iter/5) == 0:
@@ -42,13 +46,21 @@ class LogisticRegression():
         
         #随机梯度下降
         if self.gd == 'sgd':
+            flag = False
             for n in range(self.n_iter):
+                if flag:
+                    break
                 x = random.randint(0,datanum-1)
                 datax = np.array(TrainData[TrainData.columns.tolist()[0:featnum]])[x]
                 datax_T = datax.transpose()
                 hxx = self.sigmoid(np.dot(self.weights,datax_T))
-                self.weights = self.weights - self.eta * (hxx - y_label[x]) * datax#即weights = weights - eta*(h(x)-y)*x/datanum
-                
+                lossx = hxx-y_label[x]
+                gradientx = lossx * datax
+                self.weights = self.weights - self.eta * gradientx#即weights = weights - eta*(h(x)-y)*x/datanum
+                if n % 10 ==0:
+                    cost = self.costFunction(np.array(TrainData[TrainData.columns.tolist()[0:featnum]]),y_label)
+                    print(cost)
+                #loss = 
                 #可以选择训练过程中绘制决策边界
                 if self.plot == True:
                     if n % (self.n_iter/5) == 0:
@@ -57,7 +69,15 @@ class LogisticRegression():
                 self.plotDecisionBoundary(TrainData)
                 
             return self.weights
-                
+    
+    def costFunction(self,data,label):
+        datanum = len(data)
+        h = self.sigmoid(np.dot(self.weights,data.transpose()))
+        #计算损失函数
+        cost = (-1/datanum)*(np.dot(np.log(h),label)+(np.dot(np.log(1-h),1-label)))
+        return cost
+          
+    
     def predict(self,testData):
         flag = np.dot(self.weights,testData)
         if flag > 0:
@@ -72,7 +92,7 @@ class LogisticRegression():
             temp = np.array(TestData.iloc[i][0:len(TestData.columns)-1]).reshape(len(TestData.columns)-1,1)
             if self.predict(temp)==TestData.label.tolist()[i]:
                 num = num + 1
-        return num/len(TestData)
+        return num/float(len(TestData))*100
     
     def plotDecisionBoundary(self,TrainData):
         fig=plt.figure(figsize=(10,8))
