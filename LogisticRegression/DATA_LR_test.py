@@ -27,18 +27,6 @@ print("模型1训练集精确率：",model_lr1.accuracy(pima_train))
 print("模型1测试集精确率：",model_lr1.accuracy(pima_test))
 print("模型1权重为：",model_lr1.weights[0])
 
-
-def drawTest(x1,x2):
-    plt.figure(figsize=(10,8))
-    plt.xlim(-4,4)  #  设置x轴刻度范围
-    plt.ylabel('x2')
-    plt.title('decision boundary') 
-    plt.scatter(data_train['x1'], data_train['x2'], c=data_train['label'], s=30, marker='o')
-    #plt.scatter(data_train['x1'], data_train['x2'], c=data_train['label'], s=30, marker='o')
-    plt.scatter(data_test['x1'], data_test['x2'], c=data_test['label'], s=50, marker='*')
-    plt.plot(x1,x2)
-    plt.legend(["db","train","test"])
-
 #############################模型2#############################################
 #导入数据集
 data = pd.read_csv('test.csv')
