@@ -7,8 +7,7 @@ Created on Sat Aug 18 17:30:42 2018
 import LogisticRegression     
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn import preprocessing
-import numpy as np       
+from sklearn import preprocessing       
 import matplotlib.pyplot as plt
 import TwoDimensionPlot
 ##################################模型1########################################
@@ -51,9 +50,7 @@ model_lr2.fit(data_train)
 print("模型2训练集精确率：",model_lr2.accuracy(data_train))
 print("模型2测试集精确率：",model_lr2.accuracy(data_test))
 print("模型2权重为：",model_lr2.weights[0])
-m2x1 = np.arange(-4,4,1)
-m2x2 =-1 * model_lr2.weights[0][0] / model_lr2.weights[0][1] * m2x1
-drawTest(m2x1,m2x2)
+model_lr2.plotDecisionBoundary(data_test)
 
 draw = TwoDimensionPlot.TwoDimensionPlot(data_train,model_lr2.warr)
 draw.plotContour()
@@ -63,8 +60,6 @@ model_lr3.fit(data_train)
 print("模型3训练集精确率：",model_lr3.accuracy(data_train))
 print("模型3测试集精确率：",model_lr3.accuracy(data_test))
 print("模型3权重为：",model_lr3.weights[0])
-m3x1 = np.arange(-4,4,1)
-m3x2 =-1 * model_lr3.weights[0][0] / model_lr3.weights[0][1] * m3x1
-drawTest(m3x1,m3x2)
+model_lr3.plotDecisionBoundary(data_test)
 
 
