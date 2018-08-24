@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Aug 24 13:29:22 2018
+Created on Fri Aug 24 14:29:22 2018
 
 @author: htshinichi
 """
@@ -31,6 +31,10 @@ class TwoDimensionPlot():
         if(len(warr) > 1000):
             self.w1 = self.w1[0:1000]
             self.w2 = self.w2[0:1000]
+        self.xd = np.array(self.w1).min()
+        self.xu = np.array(self.w1).max()
+        self.yd = np.array(self.w2).min()
+        self.yu = np.array(self.w2).max()
         self.w1,self.w2 = np.meshgrid(np.array(self.w1),np.array(self.w2))
         self.cost = 0
         for i in range(datanum):
@@ -44,8 +48,8 @@ class TwoDimensionPlot():
     def plotContour(self):
         #self.calCost(data,warr)
         plt.figure(figsize=(8,8))
-        plt.xlim(-1,2)
-        plt.ylim(-2,1)
+        plt.xlim(self.xd,self.xu)
+        plt.ylim(self.yd,self.yu)
         P=plt.contour(self.w1,self.w2,self.cost,10)
         plt.clabel(P, alpha=0.75, cmap='jet',inline=1, fontsize=10)
         C=plt.contour(self.w1,self.w2,self.regular_cost,1)
