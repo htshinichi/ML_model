@@ -35,90 +35,11 @@ class LogisticRegression():
         self.carr = []
         #批量梯度下降
         if self.gd == 'bgd':
-            for n in range(self.n_iter):
-                #sigmoid([1×featnum] × [featnum×datanum]) --> [1×datanum]
-                #预测值，即h(x)=1/(1+e^(-wx))
-                hx = self.sigmoid(np.dot(self.weights,self.data_T)) 
-                
-                #[1×datanum] - [1×datanum] --> [1×datanum]
-                #h(x)-y,误差值
-                loss = hx - self.y_label 
-                
-                #L2正则化项求导,更新每个权重时都要加上，shape为[1×featnum]
-                penalty = np.ones((1,self.featnum))*2*self.lamda*self.weights.sum()
-                
-                if self.regular == 'l2':
-                    #([1×datanum] × [datanum×featnum] + [1×featnum])/datanum --> [1×featnum]
-                    #([h(x)-y]x + 2*lamda*w)/m
-                    gradient = (np.dot(loss,self.data) + penalty) / self.datanum 
-                
-                elif self.regular == 'none': 
-                    #([1×datanum] × [datanum×featnum])/datanum --> [1×featnum]
-                    #[h(x)-y]x/m
-                    gradient = (np.dot(loss,self.data)) / self.datanum
-                
-                #[1×featnum] - eta*[1×featnum] --> [1×featnum]
-                self.weights = self.weights - self.eta * gradient
-                
-                #显示迭代次数和损失值
-                if (n % 100 == 0) & self.showcost:
-                    self.cost = self.costFunction()
-                    print("迭代",n,"次","损失值为：",self.cost)
-                    
-                #可以选择训练过程中绘制决策边界
-                if self.plot == True:
-                    if n % (self.n_iter/5) == 0:
-                        self.plotDecisionBoundary(TrainData)
-            if self.plot == True:
-                self.plotDecisionBoundary(TrainData)
-                
-            return self.weights
-        
+            self.BatchGradientDescent()        
         #随机梯度下降
         if self.gd == 'sgd':
-            for n in range(self.n_iter):
-                #生成一个随机数x
-                x = random.randint(0,self.datanum-1)  
-                datax = self.data[x]  #[1×featnum]
-                datax_T = datax.transpose()  #[featnum×1]
-                
-                #sigmoid([1×featnum] × [featnum×1]) --> [1×1]
-                hxx = self.sigmoid(np.dot(self.weights,datax_T))
-                
-                #[1×1] - [1×1] --> [1×1]
-                lossx = hxx-self.label[x]
-                
-                #L2正则化项求导,更新每个权重时都要加上，shape为[1×featnum]
-                penalty = np.ones((1,self.featnum))*2*self.lamda*self.weights.sum() 
-                
-                    
-                if self.regular == 'l2':
-                    #([1×1] × [1×featnum] + [1×featnum]) --> [1×featnum]
-                    gradientx = (lossx * datax) + penalty
-                if self.regular == 'none':
-                    #([1×1] × [1×featnum]) --> [1×featnum]
-                    gradientx = lossx * datax
-                    
-                    
-                #[1×featnum] - eta*[1×featnum] --> [1×featnum]
-                self.weights = self.weights - self.eta * gradientx
-                self.warr.append(self.weights[0].tolist())
-                #当损失值小于0.1时停止迭代
-                if self.costFunction() < 0.1:
-                    break
-                #显示迭代次数和损失值
-                if (n % 100 == 0) & self.showcost:
-                    self.cost = self.costFunction()
-                    print("迭代",n,"次","损失值为：",self.cost)
-                    
-                #可以选择训练过程中绘制决策边界
-                if self.plot == True:
-                    if n % (self.n_iter/5) == 0:
-                        self.plotDecisionBoundary(TrainData)
-            if self.plot == True:
-                self.plotDecisionBoundary(TrainData)
-                
-            return self.weights
+            self.StochasitcGradientDescent()
+        
     
     #计算损失值
     def costFunction(self):
@@ -132,9 +53,9 @@ class LogisticRegression():
         if self.regular == 'l1':
             #lamda*1 --> [1×1]
             C = self.lamda * np.abs(self.weights).sum()#L1正则化项
-            
             #([1×datanum]×[datanum×1]) + ([1×datanum]×[datanum×1]) --> [1×1]
             cost = (-1/self.datanum) * (np.dot(np.log(h),self.label)+(np.dot(np.log(1-h),1-self.label)) + C)
+            #print('l1 cost:',cost)
             
         #R(w) = ||w||2 权重平方之和   
         elif self.regular == 'l2':
@@ -181,4 +102,89 @@ class LogisticRegression():
         plt.scatter(TrainData[TrainData.columns[0]], TrainData[TrainData.columns[1]], c=TrainData['label'], s=30)
         plt.plot(x1,x2)
         plt.show()
+    
+    def BatchGradientDescent(self):
+        for n in range(self.n_iter):
+            #sigmoid([1×featnum] × [featnum×datanum]) --> [1×datanum]
+            #预测值，即h(x)=1/(1+e^(-wx))
+            hx = self.sigmoid(np.dot(self.weights,self.data_T)) 
+            
+            #[1×datanum] - [1×datanum] --> [1×datanum]
+            #h(x)-y,误差值
+            loss = hx - self.label 
+            
+            if self.regular == 'l2':
+                #L2正则化项求导,更新每个权重时都要加上，shape为[1×featnum]
+                penalty = np.ones((1,self.featnum))*2*self.lamda*self.weights.sum()
+            
+            elif self.regular == 'l1':
+                penalty = []
+                for w in self.weights[0]:
+                    if w != 0:
+                        p = w/np.abs(w)
+                    elif w==0:
+                        p = 0
+                    penalty.append(p)
+            elif self.regular == 'none':
+                penalty = np.zeros((1,self.featnum))
+            
+
+            #([1×datanum] × [datanum×featnum] + [1×featnum])/datanum --> [1×featnum]
+            #([h(x)-y]x + R(w))/m
+            gradient = (np.dot(loss,self.data) + penalty) / self.datanum 
+        
+            #[1×featnum] - eta*[1×featnum] --> [1×featnum]
+            self.weights = self.weights - self.eta * gradient
+            self.warr.append(self.weights[0].tolist())
+            #显示迭代次数和损失值
+            if (n % 100 == 0) & self.showcost:
+                self.cost = self.costFunction()
+                print("迭代",n,"次","损失值为：",self.cost)
+       
+    
+    def StochasitcGradientDescent(self):
+        for n in range(self.n_iter):
+            #生成一个随机数x
+            x = random.randint(0,self.datanum-1)  
+            datax = self.data[x]  #[1×featnum]
+            datax_T = datax.transpose()  #[featnum×1]
+            
+            #sigmoid([1×featnum] × [featnum×1]) --> [1×1]
+            hxx = self.sigmoid(np.dot(self.weights,datax_T))
+            
+            #[1×1] - [1×1] --> [1×1]
+            lossx = hxx-self.label[x]
+            
+            if self.regular == 'l2':
+                #L2正则化项求导,更新每个权重时都要加上，shape为[1×featnum]
+                penalty = np.ones((1,self.featnum))*2*self.lamda*self.weights.sum() 
+                
+            elif self.regular == 'l1':
+                penalty = []
+                for w in self.weights[0]:
+                    if w != 0:
+                        p = w/np.abs(w)
+                    elif w==0:
+                        p = 0
+                    penalty.append(p)
+            
+            elif self.regular == 'none':
+                penalty = np.zeros((1,self.featnum))
+
+
+            #([1×1] × [1×featnum] + [1×featnum]) --> [1×featnum]
+            gradientx = (lossx * datax) + penalty
+
+                
+                
+            #[1×featnum] - eta*[1×featnum] --> [1×featnum]
+            self.weights = self.weights - self.eta * gradientx
+            self.warr.append(self.weights[0].tolist())
+            #当损失值小于0.1时停止迭代
+            if self.costFunction() < 0.1:
+                break
+            #显示迭代次数和损失值
+            if (n % 100 == 0) & self.showcost:
+                self.cost = self.costFunction()
+                print("迭代",n,"次","损失值为：",self.cost)            
     
