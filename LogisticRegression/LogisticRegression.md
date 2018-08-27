@@ -32,8 +32,6 @@ def sigmoid(self,fx):
 求偏导得：$\frac{\partial L(w)}{\partial w}=-\frac{1}{m}\sum\limits_{i=1}^m[y_i-h(x_i)]x_i$  
 更新权重：$w = w - α\frac{1}{m}\sum\limits_{i=1}^m[h(x_i)-y_i]x$  
 (训练方式可选择批量梯度下降或是随机梯度下降，可以通过初始化类时的plot参数选择是否显示决策边界变化情况)  
-加上L2正则化后$E(w)=L(w)+λ\sum\limits_{j=1}^nw_j^2$  
-求导$\frac{\partial L(w)}{\partial w}=-\frac{1}{m}\sum\limits_{i=1}^m[y_i-h(x_i)]x_i+2λ\sum\limits_{j=1}^nw_j$  
 
 
 ```python
@@ -47,106 +45,111 @@ def fit(self,TrainData):
     self.data_T = self.data.transpose()#数据大小为featnum×datanum
     self.weights = np.zeros((1,self.featnum))#初始化权重，权重大小为1×featnum                
     self.warr = []
+    self.carr = []
     #批量梯度下降
+    if self.gd == 'bgd':
+        self.BatchGradientDescent()        
+    #随机梯度下降
+    if self.gd == 'sgd':
+        self.StochasitcGradientDescent()
 ```
 
-#### 批量梯度下降
+加上**L2正则化**后$E(w)=L(w)+λ\sum\limits_{j=1}^nw_j^2$  
+求导$\frac{\partial L(w)}{\partial w}=-\frac{1}{m}\sum\limits_{i=1}^m[y_i-h(x_i)]x_i+2λ\sum\limits_{j=1}^nw_j$  
+加上**L1正则化**后$E(w)=L(w)+λ\sum\limits_{j=1}^n|w_j|$  
+求导$\frac{\partial L(w)}{\partial w}=-\frac{1}{m}\sum\limits_{i=1}^m[y_i-h(x_i)]x_i+\sum\limits_{j=1}^nk_jλ$　　$(w_j>0,k_j=1;w_j<0,k_j=-1;w_j=0,k_j=0)$  
+### 4.批量梯度下降  
 
 
 ```python
-    if self.gd == 'bgd':
-        for n in range(self.n_iter):
-            #sigmoid([1×featnum] × [featnum×datanum]) --> [1×datanum]
-            #预测值，即h(x)=1/(1+e^(-wx))
-            hx = self.sigmoid(np.dot(self.weights,self.data_T)) 
+def BatchGradientDescent(self):
+    for n in range(self.n_iter):
+        #sigmoid([1×featnum] × [featnum×datanum]) --> [1×datanum]
+        #预测值，即h(x)=1/(1+e^(-wx))
+        hx = self.sigmoid(np.dot(self.weights,self.data_T)) 
 
-            #[1×datanum] - [1×datanum] --> [1×datanum]
-            #h(x)-y,误差值
-            loss = hx - self.y_label 
+        #[1×datanum] - [1×datanum] --> [1×datanum]
+        #h(x)-y,误差值
+        loss = hx - self.label 
 
+        if self.regular == 'l2':
             #L2正则化项求导,更新每个权重时都要加上，shape为[1×featnum]
             penalty = np.ones((1,self.featnum))*2*self.lamda*self.weights.sum()
 
-            if self.regular == 'l2':
-                #([1×datanum] × [datanum×featnum] + [1×featnum])/datanum --> [1×featnum]
-                #([h(x)-y]x + 2*lamda*w)/m
-                gradient = (np.dot(loss,self.data) + penalty) / self.datanum 
+        elif self.regular == 'l1':
+            penalty = []
+            for w in self.weights[0]:
+                if w != 0:
+                    p = w/np.abs(w)
+                elif w==0:
+                    p = 0
+                penalty.append(p)
+        elif self.regular == 'none':
+            penalty = np.zeros((1,self.featnum))
 
-            elif self.regular == 'none': 
-                #([1×datanum] × [datanum×featnum])/datanum --> [1×featnum]
-                #[h(x)-y]x/m
-                gradient = (np.dot(loss,self.data)) / self.datanum
 
-            #[1×featnum] - eta*[1×featnum] --> [1×featnum]
-            self.weights = self.weights - self.eta * gradient
+        #([1×datanum] × [datanum×featnum] + [1×featnum])/datanum --> [1×featnum]
+        #([h(x)-y]x + R(w))/m
+        gradient = (np.dot(loss,self.data) + penalty) / self.datanum 
 
-            #显示迭代次数和损失值
-            if (n % 100 == 0) & self.showcost:
-                self.cost = self.costFunction()
-                print("迭代",n,"次","损失值为：",self.cost)
-
-            #可以选择训练过程中绘制决策边界
-            if self.plot == True:
-                if n % (self.n_iter/5) == 0:
-                    self.plotDecisionBoundary(TrainData)
-        if self.plot == True:
-            self.plotDecisionBoundary(TrainData)
-
-        return self.weights
+        #[1×featnum] - eta*[1×featnum] --> [1×featnum]
+        self.weights = self.weights - self.eta * gradient
+        self.warr.append(self.weights[0].tolist())
+        #显示迭代次数和损失值
+        if (n % 100 == 0) & self.showcost:
+            self.cost = self.costFunction()
+            print("迭代",n,"次","损失值为：",self.cost)
 ```
 
-#### 随机梯度下降
+### 5.随机梯度下降
 
 
 ```python
-    #随机梯度下降
-    if self.gd == 'sgd':
-        for n in range(self.n_iter):
-            #生成一个随机数x
-            x = random.randint(0,self.datanum-1)  
-            datax = self.data[x]  #[1×featnum]
-            datax_T = datax.transpose()  #[featnum×1]
+def StochasitcGradientDescent(self):
+    for n in range(self.n_iter):
+        #生成一个随机数x
+        x = random.randint(0,self.datanum-1)  
+        datax = self.data[x]  #[1×featnum]
+        datax_T = datax.transpose()  #[featnum×1]
 
-            #sigmoid([1×featnum] × [featnum×1]) --> [1×1]
-            hxx = self.sigmoid(np.dot(self.weights,datax_T))
+        #sigmoid([1×featnum] × [featnum×1]) --> [1×1]
+        hxx = self.sigmoid(np.dot(self.weights,datax_T))
 
-            #[1×1] - [1×1] --> [1×1]
-            lossx = hxx-self.label[x]
+        #[1×1] - [1×1] --> [1×1]
+        lossx = hxx-self.label[x]
 
+        if self.regular == 'l2':
             #L2正则化项求导,更新每个权重时都要加上，shape为[1×featnum]
             penalty = np.ones((1,self.featnum))*2*self.lamda*self.weights.sum() 
 
+        elif self.regular == 'l1':
+            penalty = []
+            for w in self.weights[0]:
+                if w != 0:
+                    p = w/np.abs(w)
+                elif w==0:
+                    p = 0
+                penalty.append(p)
 
-            if self.regular == 'l2':
-                #([1×1] × [1×featnum] + [1×featnum]) --> [1×featnum]
-                gradientx = (lossx * datax) + penalty
-            if self.regular == 'none':
-                #([1×1] × [1×featnum]) --> [1×featnum]
-                gradientx = lossx * datax
+        elif self.regular == 'none':
+            penalty = np.zeros((1,self.featnum))
 
+        #([1×1] × [1×featnum] + [1×featnum]) --> [1×featnum]
+        gradientx = (lossx * datax) + penalty
 
-            #[1×featnum] - eta*[1×featnum] --> [1×featnum]
-            self.weights = self.weights - self.eta * gradientx
-            self.warr.append(self.weights[0].tolist())
-            #当损失值小于0.1时停止迭代
-            if self.costFunction() < 0.1:
-                break
-            #显示迭代次数和损失值
-            if (n % 100 == 0) & self.showcost:
-                self.cost = self.costFunction()
-                print("迭代",n,"次","损失值为：",self.cost)
-
-            #可以选择训练过程中绘制决策边界
-            if self.plot == True:
-                if n % (self.n_iter/5) == 0:
-                    self.plotDecisionBoundary(TrainData)
-        if self.plot == True:
-            self.plotDecisionBoundary(TrainData)
-
-        return self.weights
+        #[1×featnum] - eta*[1×featnum] --> [1×featnum]
+        self.weights = self.weights - self.eta * gradientx
+        self.warr.append(self.weights[0].tolist())
+        #当损失值小于0.1时停止迭代
+        if self.costFunction() < 0.1:
+            break
+        #显示迭代次数和损失值
+        if (n % 100 == 0) & self.showcost:
+            self.cost = self.costFunction()
+            print("迭代",n,"次","损失值为：",self.cost)            
 ```
 
-### 4.计算损失值costFunction()
+### 6.计算损失值costFunction()
 
 
 ```python
@@ -155,8 +158,8 @@ def costFunction(self):
     #sigmoid([1×featnum] × [featnum×datanum]) --> [1×datanum]
     h = self.sigmoid(np.dot(self.weights,self.data_T))
 
-    #计算损失函数:E(w)=L(w)+lamda*R(w)
-    #E(w) = -1/datanum * [y*ln(h(x)) + (1-y)*ln(1-h(x))]
+    #计算损失函数:J(w)=L(w)+lamda*R(w)
+    #J(w) = -1/datanum * [y*ln(h(x)) + (1-y)*ln(1-h(x))]
 
     #R(w) = ||w||1 权重绝对值之和
     if self.regular == 'l1':
@@ -180,7 +183,7 @@ def costFunction(self):
     return cost
 ```
 
-### 5.预测单个样本类别predict(testData)  
+### 7.预测单个样本类别predict(testData)  
 当$w·x > 0$时为1，当$w·x < 0$时为0
 
 
@@ -195,7 +198,7 @@ def predict(self,testData):
     return pred
 ```
 
-### 6.求准确率accuracy(TestData)  
+### 8.求准确率accuracy(TestData)  
 
 
 ```python
@@ -209,7 +212,7 @@ def accuracy(self,TestData):
     return num/len(TestData)
 ```
 
-### 7.绘制决策边界plotDecisionBoundary(TrainData)
+### 9.绘制决策边界plotDecisionBoundary(TrainData)
 
 
 ```python
@@ -294,4 +297,4 @@ def plot3D(self):
         plt.show()
 ```
 
-**逻辑回归还有很多可以添加的，包括L1正则化，亦或是衰减学习率等，这些后续会逐步加上**
+**发现使用SGD+L1的方式训练，损失值一直不收敛，导致准确率震荡很大，不知道是不是写的有问题，还有就是这个等值线图，虽然画出来了，但看上去很奇怪，后续可以在别的模型上再使用看一下**
