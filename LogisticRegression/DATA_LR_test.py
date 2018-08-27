@@ -27,27 +27,41 @@ print("模型1训练集精确率：",model_lr1.accuracy(pima_train))
 print("模型1测试集精确率：",model_lr1.accuracy(pima_test))
 print("模型1权重为：",model_lr1.weights[0])
 
-#############################模型2#############################################
+    
+
 #导入数据集
 data = pd.read_csv('test.csv')
 #划分数据集
 data_train,data_test = train_test_split(data,test_size=0.3)
-#定义模型：迭代次数默认100，学习率默认0.0001，训练方式默认批量梯度下降，显示决策边界变化情况
-model_lr2 = LogisticRegression.LogisticRegression(eta=0.01,n_iter=10000,gd='sgd',regular='l2')
+
+#############################模型2#############################################
+##定义模型：迭代10000次，学习率为0.01，训练方式默认批量梯度下降，使用L2正则化
+model_lr2 = LogisticRegression.LogisticRegression(eta=0.01,n_iter=10000,regular='l2')
 model_lr2.fit(data_train)
 print("模型2训练集精确率：",model_lr2.accuracy(data_train))
 print("模型2测试集精确率：",model_lr2.accuracy(data_test))
 print("模型2权重为：",model_lr2.weights[0])
 model_lr2.plotDecisionBoundary(data_test)
 
-draw = TwoDimensionPlot.TwoDimensionPlot(data_train,model_lr2.warr)
-draw.plotContour()
-###################################模型3#######################################
-model_lr3 = LogisticRegression.LogisticRegression(eta=0.0001,n_iter=1000,gd='sgd',regular='none')
+##画出损失函数等值线
+#draw = TwoDimensionPlot.TwoDimensionPlot(data_train,model_lr2.warr)
+#draw.plotContour()
+####################################模型3#######################################
+##定义模型：迭代1000次，学习率为0.0001，训练方式随机梯度下降，不使用正则化
+model_lr3 = LogisticRegression.LogisticRegression(n_iter=1000,gd='sgd',regular='none')
 model_lr3.fit(data_train)
 print("模型3训练集精确率：",model_lr3.accuracy(data_train))
 print("模型3测试集精确率：",model_lr3.accuracy(data_test))
 print("模型3权重为：",model_lr3.weights[0])
 model_lr3.plotDecisionBoundary(data_test)
+
+#################################模型4#########################################
+##定义模型：迭代1000次，学习率为0.01，训练方式默认批量梯度下降，使用L1正则化，正则惩罚项为0.05，打印损失值和迭代次数
+model_lr4 = LogisticRegression.LogisticRegression(n_iter=1000,eta=0.01,regular='l1',lamda=0.05,showcost=True)
+model_lr4.fit(data_train)
+print("模型4训练集精确率：",model_lr4.accuracy(data_train))
+print("模型4测试集精确率：",model_lr4.accuracy(data_test))
+print("模型4权重为：",model_lr4.weights[0])
+model_lr4.plotDecisionBoundary(data_test)
 
 
