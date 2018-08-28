@@ -8,39 +8,32 @@ Created on Tue Aug 28 12:35:32 2018
 import numpy as np
 import random
 class SupportVectorMachine():
-    def __init__(self,TrainData,C,toler,kernelInfo):
-        self.datanum = len(TrainData) #训练样本数量
-        self.featnum = len(TrainData.columns) - 1 #特征数量
-        self.TrainData =  np.array(TrainData[TrainData.columns.tolist()[0:self.featnum]]) #训练数据集
-        self.label = np.array(TrainData.label) #训练数据集标签
+    def __init__(self,C=1,toler=0,kernelInfo=('linear',0),n_iter=100):
         self.C = C
         self.toler = toler
-        self.alphas = np.zeros((self.datanum,1))
-        self.b = 0
-        self.ErrorCache = np.zeros((self.datanum,2))
-        self.K = np.zeros((self.datanum,self.datanum))
-        for i in range(self.datanum):
-            self.K[:,i] = self.calKernelValues(self.TrainData,self.TrainData[i,:],kernelInfo)
+        self.kernelInfo = kernelInfo
+        self.n_iter = n_iter
     
     #计算核函数
-    def calKernelValues(self,data,datax,kernelInfo):
-        k_mat = np.zeros((self.datanum,1))
-        if kernelInfo[0] == 'linear':
+    def calKernelValues(self,data,datax):
+        datalen = len(data)
+        k_mat = np.zeros((datalen,1))
+        if self.kernelInfo[0] == 'linear':
             #线性核函数 K(x,z) = xz
-            #[datanum×featnum] × [featnum×1] --> [datanum×1]
+            #[datalen×featnum] × [featnum×1] --> [datalen×1]
             k_mat = np.dot(data,datax.T)
-        elif kernelInfo[0] == 'rbf':
+        elif self.kernelInfo[0] == 'rbf':
             #径向基核函数 K(x,z) = exp((||x-z||^2)/(-2*delta^2))
-            #循环后 --> [datanum×1]
-            for j in range(self.datanum):
+            #循环后 --> [datalen×1]
+            for j in range(datalen):
                 deltaRow = data[j,:] - datax
                 #[1×featnum] × [featnum×1] --> [1×1]
                 #求出||x-z||^2 
                 k_mat[j] = np.dot(deltaRow,deltaRow.T)
                 
-            #[datanum×1] / [1×1] --> [datanum×1]
+            #[datalen×1] / [1×1] --> [datalen×1]
             #求出exp((||x-z||^2)/(-2*delta^2))
-            k_mat = np.exp(k_mat/(-2*kernelInfo[1]**2))
+            k_mat = np.exp(k_mat/(-2*self.kernelInfo[1]**2))
             
         else:
             raise NameError('That Kernel is not recognized!')
@@ -51,7 +44,7 @@ class SupportVectorMachine():
     def calErrorValues(self,k):
         #计算alphaj * yj
         #[datanum×1] 对应相乘后转置 --> [1×datanum]
-        alphay = np.multiply(self.alphas,self.label).T
+        alphay = np.multiply(self.alphas.T,self.label)
         
         #获取Kjk = K(xk,xj)，第k列
         #[datanum × 1] 
@@ -85,7 +78,7 @@ class SupportVectorMachine():
         
     
     #调整大于H或小于L的alpha值
-    def clipAlpha(aj,H,L):
+    def clipAlpha(self,aj,H,L):
         if aj > H:
             aj = H
         if aj < L:
@@ -164,11 +157,12 @@ class SupportVectorMachine():
             alphai_old = self.alphas[i].copy()
             alphaj_old = self.alphas[j].copy()
             if self.label[i] != self.label[j]:
-                L = np.max(0,self.alphas[j]-self.alphas[i])
-                H = np.min(self.C,self.C+self.alphas[j]-self.alphas[i])
+                #print(np.maximum(0,(self.alphas[j]-self.alphas[i])[0]))
+                L = np.maximum(0,(self.alphas[j]-self.alphas[i])[0])
+                H = np.minimum(self.C,self.C+self.alphas[j]-self.alphas[i])
             else:
-                L = np.max(0,self.alphas[j]+self.alphas[i]-self.C)
-                H = np.min(self.C,self.alphas[j]+self.alphas[i])
+                L = np.maximum(0,self.alphas[j]+self.alphas[i]-self.C)
+                H = np.minimum(self.C,self.alphas[j]+self.alphas[i])
         
             if L==H:
                 print("L=H")
@@ -181,9 +175,11 @@ class SupportVectorMachine():
             if eta >= 0:
                 print("eta>=0")
                 return 0
-            
-            self.alphas[j] = self.alphas[j] - self.label[j] * (Ei-Ej) / eta
+            #print("eta:",eta)
+            self.alphas[j] -= self.label[j] * (Ei-Ej) / eta
+            #print("调整前aj:",self.alphas[j])
             self.alphas[j] = self.clipAlpha(self.alphas[j],H,L)
+            #print("调整后aj:",self.alphas[j])
             self.updateErrorCache(j)
             
             if(np.abs(self.alphas[j]-alphaj_old)<0.00001):
@@ -198,4 +194,69 @@ class SupportVectorMachine():
             return 1
         else:
             return 0
+
+    
+    def fit(self,TrainData):
+        self.datanum = len(TrainData) #训练样本数量
+        self.featnum = len(TrainData.columns) - 1 #特征数量
+        self.TrainData =  np.array(TrainData[TrainData.columns.tolist()[0:self.featnum]]) #训练数据集
+        self.label = np.array(TrainData.label) #训练数据集标签
+        self.alphas = np.zeros((self.datanum,1))
+        self.b = 0
+        self.ErrorCache = np.zeros((self.datanum,2))
+        self.K = np.zeros((self.datanum,self.datanum))
+        #print("标签：",self.label)
+        for i in range(self.datanum):
+            self.K[:,i] = self.calKernelValues(self.TrainData,self.TrainData[i,:])    
         
+        x_iter = 0
+        entireSet = True
+        alphaPairsChanged = 0 #遍历整个数据集修改任意alpha的次数
+        
+        #若
+        while(x_iter<self.n_iter)&((alphaPairsChanged>0)|(entireSet)):
+            alphaPairsChanged = 0
+            if entireSet:
+                for i in range(self.datanum):
+                    #若alphai被修改，则次数+1
+                    alphaPairsChanged += self.InnerLoop(i)
+                print("fullset,iter: %d i:%d,pairs changed %d" % (x_iter,i,alphaPairsChanged))
+                x_iter += 1
+            else:
+                #获取0<alpha<C的坐标
+                nonBoundIs = np.nonzero((self.alphas>0)&(self.alphas<self.C))[0]
+                for i in nonBoundIs:
+                    alphaPairsChanged += self.InnerLoop(i)
+                    print("non-bound,iter: %d i:%d,pairs changed %d" % (x_iter,i,alphaPairsChanged))
+                x_iter += 1
+            
+            
+            if entireSet:
+                entireSet = False
+            elif alphaPairsChanged == 0:
+                entireSet = True
+                
+        return self.b,self.alphas
+                
+        
+    def getAccuracy(self,TestData):
+        num = len(TestData)
+        test_label = np.array(TestData.label)
+        test_data =  np.array(TestData[TestData.columns.tolist()[0:self.featnum]])
+        supportVectorsIndex = np.nonzero(self.alphas>0)[0]
+        supportVectors = self.TrainData[supportVectorsIndex]
+        supportVectorLabels = self.label[supportVectorsIndex]
+        supportVectorAlphas = self.alphas[supportVectorsIndex]
+        matchCount = 0
+        for i in range(num):  
+            kernelValue = self.calKernelValues(supportVectors, test_data[i, :])  
+            #print("1",kernelValue)
+            #print("2",np.multiply(supportVectorLabels, supportVectorAlphas.T)[0])
+            predict = np.dot(kernelValue.T,np.multiply(supportVectorLabels, supportVectorAlphas.T)[0]) + self.b 
+            print(np.sign(predict))
+            print(np.sign(test_label[i]))
+            if (np.sign(predict) == np.sign(test_label[i])):  
+                matchCount += 1  
+        accuracy = float(matchCount) / num  
+        return accuracy  
+ 
