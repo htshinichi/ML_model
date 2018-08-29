@@ -17,23 +17,26 @@ class SupportVectorMachine():
     #计算核函数
     def calKernelValues(self,data,datax):
         datalen = len(data)
-        k_mat = np.zeros((datalen,1))
+        k_mat = np.zeros((datalen,1))#shape:(datalen,1)
         if self.kernelInfo[0] == 'linear':
             #线性核函数 K(x,z) = xz
-            #[datalen×featnum] × [featnum×1] --> [datalen×1]
+            #data shape:(datalen,featnum)  datax.T shape :(featnum,)
+            #(datalen,featnum) × (featnum,) --> (datalen,)
             k_mat = np.dot(data,datax.T)
+            
         elif self.kernelInfo[0] == 'rbf':
             #径向基核函数 K(x,z) = exp((||x-z||^2)/(-2*delta^2))
             #循环后 --> [datalen×1]
             for j in range(datalen):
+                
                 deltaRow = data[j,:] - datax
                 #[1×featnum] × [featnum×1] --> [1×1]
                 #求出||x-z||^2 
-                k_mat[j] = np.dot(deltaRow,deltaRow.T)
+                k_mat[j] = np.dot(deltaRow,deltaRow.T) 
                 
             #[datalen×1] / [1×1] --> [datalen×1]
             #求出exp((||x-z||^2)/(-2*delta^2))
-            k_mat = np.exp(k_mat/(-2*self.kernelInfo[1]**2))
+            k_mat = np.exp(k_mat/(-1*self.kernelInfo[1]**2)).reshape(datalen)
             
         else:
             raise NameError('That Kernel is not recognized!')
@@ -165,7 +168,7 @@ class SupportVectorMachine():
                 H = np.minimum(self.C,self.alphas[j]+self.alphas[i])
         
             if L==H:
-                print("L=H")
+                #print("L=H")
                 return 0
             
             Kij = np.dot(self.TrainData[i,:],self.TrainData[j,:].T)
@@ -173,7 +176,7 @@ class SupportVectorMachine():
             Kjj = np.dot(self.TrainData[j,:],self.TrainData[j,:].T)
             eta = 2.0 * Kij - Kii - Kjj            
             if eta >= 0:
-                print("eta>=0")
+                #print("eta>=0")
                 return 0
             #print("eta:",eta)
             self.alphas[j] -= self.label[j] * (Ei-Ej) / eta
@@ -182,8 +185,8 @@ class SupportVectorMachine():
             #print("调整后aj:",self.alphas[j])
             self.updateErrorCache(j)
             
-            if(np.abs(self.alphas[j]-alphaj_old)<0.00001):
-                print("j not moving enough")
+            if(np.abs(self.alphas[j]-alphaj_old)<0.000001):
+                #print("j not moving enough")
                 return 0
             
             self.alphas[i] = self.alphas[i] + self.label[j]*self.label[i]*(alphaj_old-self.alphas[j])
@@ -205,32 +208,31 @@ class SupportVectorMachine():
         self.b = 0
         self.ErrorCache = np.zeros((self.datanum,2))
         self.K = np.zeros((self.datanum,self.datanum))
-        #print("标签：",self.label)
         for i in range(self.datanum):
-            self.K[:,i] = self.calKernelValues(self.TrainData,self.TrainData[i,:])    
-        
+            self.K[:,i] = self.calKernelValues(self.TrainData,self.TrainData[i,:]) #self.K[:,i] shape:(detanum)
         x_iter = 0
         entireSet = True
         alphaPairsChanged = 0 #遍历整个数据集修改任意alpha的次数
-        
         #若
-        while(x_iter<self.n_iter)&((alphaPairsChanged>0)|(entireSet)):
+        while(x_iter<self.n_iter)&((alphaPairsChanged>0)|(entireSet))&(self.getAccuracy(TrainData)<0.9):
             alphaPairsChanged = 0
             if entireSet:
                 for i in range(self.datanum):
                     #若alphai被修改，则次数+1
                     alphaPairsChanged += self.InnerLoop(i)
-                print("fullset,iter: %d i:%d,pairs changed %d" % (x_iter,i,alphaPairsChanged))
+                    #print("fullset,iter: %d i:%d,pairs changed %d" % (x_iter,i,alphaPairsChanged))
                 x_iter += 1
             else:
                 #获取0<alpha<C的坐标
                 nonBoundIs = np.nonzero((self.alphas>0)&(self.alphas<self.C))[0]
                 for i in nonBoundIs:
                     alphaPairsChanged += self.InnerLoop(i)
-                    print("non-bound,iter: %d i:%d,pairs changed %d" % (x_iter,i,alphaPairsChanged))
+                    #print("non-bound,iter: %d i:%d,pairs changed %d" % (x_iter,i,alphaPairsChanged))
                 x_iter += 1
-            
-            
+            print("iter:",x_iter)
+            print("修改次数",alphaPairsChanged)
+            print("训练集准确度:",self.getAccuracy(TrainData))
+            #print(entireSet)
             if entireSet:
                 entireSet = False
             elif alphaPairsChanged == 0:
@@ -249,14 +251,11 @@ class SupportVectorMachine():
         supportVectorAlphas = self.alphas[supportVectorsIndex]
         matchCount = 0
         for i in range(num):  
-            kernelValue = self.calKernelValues(supportVectors, test_data[i, :])  
+            kernelValue = self.calKernelValues(supportVectors, test_data[i,:])  
             #print("1",kernelValue)
             #print("2",np.multiply(supportVectorLabels, supportVectorAlphas.T)[0])
             predict = np.dot(kernelValue.T,np.multiply(supportVectorLabels, supportVectorAlphas.T)[0]) + self.b 
-            print(np.sign(predict))
-            print(np.sign(test_label[i]))
             if (np.sign(predict) == np.sign(test_label[i])):  
                 matchCount += 1  
         accuracy = float(matchCount) / num  
         return accuracy  
- 
