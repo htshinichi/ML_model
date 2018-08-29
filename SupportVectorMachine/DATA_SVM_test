@@ -1,0 +1,29 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Aug 28 19:38:37 2018
+
+@author: htshinichi
+"""
+import SVM
+import pandas as pd
+from sklearn.model_selection import train_test_split
+
+#导入生成的高斯分布数据集
+data1 = pd.read_csv('test_Gaussian.csv')
+data1['label']=data1['label'].replace([1,0],[1,-1])
+#划分数据集
+data1_train,data1_test = train_test_split(data1,test_size=0.3)
+model_svm1 = SVM.SupportVectorMachine(C=0.6,toler=0.001,n_iter=50,kernelInfo=('rbf',1))
+model_svm1.fit(data1_train)
+print(model_svm1.getAccuracy(data1_train))
+print(model_svm1.getAccuracy(data1_test))
+
+#导入生成的线性分类数据集
+data2 = pd.read_csv('test_Classification.csv')
+data2['label']=data2['label'].replace([1,0],[1,-1])
+#划分数据集
+data2_train,data2_test = train_test_split(data2,test_size=0.3)
+model_svm2 = SVM.SupportVectorMachine(C=0.6,toler=0.001,n_iter=50)
+model_svm2.fit(data2_train)
+print(model_svm2.getAccuracy(data2_train))
+print(model_svm2.getAccuracy(data2_test))
