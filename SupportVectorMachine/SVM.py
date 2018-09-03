@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Aug 28 12:35:32 2018
-
 @author: htshinichi
 """
 
@@ -214,7 +213,7 @@ class SupportVectorMachine():
         entireSet = True
         alphaPairsChanged = 0 #遍历整个数据集修改任意alpha的次数
         #若
-        while(x_iter<self.n_iter)&((alphaPairsChanged>0)|(entireSet))&(self.getAccuracy(TrainData)<0.9):
+        while(x_iter<self.n_iter)&((alphaPairsChanged>0)|(entireSet)):
             alphaPairsChanged = 0
             if entireSet:
                 for i in range(self.datanum):
@@ -231,7 +230,7 @@ class SupportVectorMachine():
                 x_iter += 1
             print("iter:",x_iter)
             print("修改次数",alphaPairsChanged)
-            print("训练集准确度:",self.getAccuracy(TrainData))
+            #print("训练集准确度:",self.getAccuracy(TrainData))
             #print(entireSet)
             if entireSet:
                 entireSet = False
@@ -242,6 +241,10 @@ class SupportVectorMachine():
                 
         
     def getAccuracy(self,TestData):
+        TP = 0
+        FP = 0
+        FN = 0
+        TN = 0
         num = len(TestData)
         test_label = np.array(TestData.label)
         test_data =  np.array(TestData[TestData.columns.tolist()[0:self.featnum]])
@@ -249,13 +252,26 @@ class SupportVectorMachine():
         supportVectors = self.TrainData[supportVectorsIndex]
         supportVectorLabels = self.label[supportVectorsIndex]
         supportVectorAlphas = self.alphas[supportVectorsIndex]
-        matchCount = 0
         for i in range(num):  
             kernelValue = self.calKernelValues(supportVectors, test_data[i,:])  
             #print("1",kernelValue)
             #print("2",np.multiply(supportVectorLabels, supportVectorAlphas.T)[0])
             predict = np.dot(kernelValue.T,np.multiply(supportVectorLabels, supportVectorAlphas.T)[0]) + self.b 
-            if (np.sign(predict) == np.sign(test_label[i])):  
-                matchCount += 1  
-        accuracy = float(matchCount) / num  
-        return accuracy  
+            #print("predict:",int(np.sign(predict))>0,"label:",np.sign(test_label[i])>0)
+            if ((int(np.sign(predict))>0) & (np.sign(test_label[i])>0)):
+                #print("dada")                
+                TP = TP + 1 
+            elif ((int(np.sign(predict))<0) & (np.sign(test_label[i])<0)):
+                TN = TN + 1
+            elif ((int(np.sign(predict))>0) & (np.sign(test_label[i])<0)):
+                FP = FP + 1
+            elif ((int(np.sign(predict))<0) & (np.sign(test_label[i])>0)):
+                FN = FN + 1
+        #print(TP,FP,FN,TN)  
+            
+        accuracy = (TP+TN) / (TP+FP+TN+FN)
+        precision = TP / (TP+FP)
+        recall = TP / (TP+FN)
+        F1_score = 2*recall*precision/(recall+precision)
+        evaluate = [accuracy,precision,recall,F1_score]
+        return  evaluate
