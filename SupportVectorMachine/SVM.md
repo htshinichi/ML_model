@@ -14,7 +14,7 @@ def __init__(self,C=1,toler=0,kernelInfo=('linear',0),n_iter=100):
 
 ### 2.计算核函数数值 calKernelValues(data,datax)  
 这里写了两种核函数，其他核函数可以后续加上  
-**线性核** $K(x,z)=x^Tz$  
+**线性核** <a href="https://www.codecogs.com/eqnedit.php?latex=K(x,z)=x^Tz" target="_blank"><img src="https://latex.codecogs.com/gif.latex?K(x,z)=x^Tz" title="K(x,z)=x^Tz" /></a>  
 **高斯核(一种径向基核)** $K(x,z)=e^{-\frac{||x-z||^2}{2δ^2}}$
 
 
